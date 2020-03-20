@@ -7,6 +7,11 @@ namespace SirmaSolution.Web.Models.ViewModels
 {
     public class EmployeeInfoViewModel
     {
+        public EmployeeInfoViewModel()
+        {
+            EmployeesInfo = new List<EmployeeInfoDto>();
+        }
+
         public List<EmployeeInfoDto> EmployeesInfo { get; set; }
     }
 }

@@ -31,7 +31,6 @@ namespace SirmaSolution.Web.Controllers
         {
             int row = 0;
             Stream fileStream = file.OpenReadStream();
-            List<int> errorOnRow = new List<int>();
             List<EmployeeInfo> employeesInfo = new List<EmployeeInfo>();
             Dictionary<int, (int EmployeeId, int DaysWorked)> result = new Dictionary<int, (int EmployeeId, int DaysWorked)>();
 
@@ -41,21 +40,40 @@ namespace SirmaSolution.Web.Controllers
                 {
                     row++;
                     string line = reader.ReadLine();
+                    string toDateValue = string.Empty;
+
                     if (!line.ToLower().Contains("empid"))
                     {
                         string[] data = line.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToArray();
-                        if (data.Length != 4)
+
+                        int employeeId = 0;
+                        int.TryParse(data[0], out employeeId);
+                        int projectId = 0;
+                        int.TryParse(data[1], out projectId);
+
+                        toDateValue = ValidateToDate(data);
+
+                        if (employeeId == 0 || projectId == 0 ||  string.IsNullOrWhiteSpace(toDateValue))
                         {
-                            errorOnRow.Add(row);
+                            continue;
+                        }
+
+                        DateTime fromDate;
+                        DateTime.TryParse(data[2], CultureInfo.InvariantCulture, DateTimeStyles.None, out fromDate);
+                        DateTime toDate;
+                        DateTime.TryParse(toDateValue, CultureInfo.InvariantCulture, DateTimeStyles.None, out toDate);
+
+                        if (fromDate == default(DateTime) || toDate == default(DateTime))
+                        {
                             continue;
                         }
 
                         EmployeeInfo employeeInfo = new EmployeeInfo()
                         {
-                            EmployeeId = String.IsNullOrWhiteSpace(data[0]) ? default(int) : int.Parse(data[0]),
-                            ProjectId = String.IsNullOrWhiteSpace(data[1]) ? default(int) : int.Parse(data[1]),
-                            FromDate = String.IsNullOrWhiteSpace(data[2]) ? DateTime.Today : DateTime.Parse(data[2], CultureInfo.InvariantCulture),
-                            ToDate = String.IsNullOrWhiteSpace(data[3]) || data[3].ToLower() == "null" ? DateTime.Today : DateTime.Parse(data[3], CultureInfo.InvariantCulture)
+                            EmployeeId = employeeId,
+                            ProjectId = projectId,
+                            FromDate = fromDate,
+                            ToDate = toDate
                         };
 
                         employeesInfo.Add(employeeInfo);
@@ -75,30 +93,83 @@ namespace SirmaSolution.Web.Controllers
                 };
                 double maxDays = 0;
                 List<EmployeeInfo> employeesWorkedOnSameProject = employeesInfo.Where(x => x.ProjectId == project).ToList();
+
+                if (employeesWorkedOnSameProject.Count < 2)
+                {
+                    continue;
+                }
+
                 for (int i = 0; i < employeesWorkedOnSameProject.Count - 1; i++)
                 {
+                    int firstEmployeeId = employeesWorkedOnSameProject[i].EmployeeId;
                     DateTime firstPersonFromDate = employeesWorkedOnSameProject[i].FromDate;
                     DateTime firstPersonToDate = employeesWorkedOnSameProject[i].ToDate;
+
                     for (int j = i + 1; j < employeesWorkedOnSameProject.Count; j++)
                     {
+                        int secondEmployeeId = employeesWorkedOnSameProject[j].EmployeeId;
+                        if (firstEmployeeId == secondEmployeeId)
+                        {
+                            continue;
+                        }
+
                         DateTime secondPersonFromDate = employeesWorkedOnSameProject[j].FromDate;
                         DateTime secondPersonToDate = employeesWorkedOnSameProject[j].ToDate;
 
                         double days = OverlappingDays(firstPersonFromDate, firstPersonToDate, secondPersonFromDate, secondPersonToDate);
 
-                        if (days>maxDays)
+                        if (days > maxDays)
                         {
                             maxDays = days;
                             dto.DaysOnSameProject = (int)maxDays;
-                            dto.FirstEmployeeId = employeesWorkedOnSameProject[i].EmployeeId;
-                            dto.SecondEmployeeId = employeesWorkedOnSameProject[j].EmployeeId;
+                            dto.FirstEmployeeId = firstEmployeeId;
+                            dto.SecondEmployeeId = secondEmployeeId;
                         }
                     }
                 }
                 model.EmployeesInfo.Add(dto);
             }
 
-            return View(model);
+            return View("Result", model);
+        }
+
+        private static string ValidateToDate(string[] data)
+        {
+            if (data.Length < 4)
+            {
+                return "";
+            }
+            else if (data.Length > 4)
+            {
+                return string.Join(", ", data.Skip(3));
+            }
+            else
+            {
+                if (data[3].ToLower() == "null")
+                {
+                    return DateTime.Today.ToString();
+                }
+                else
+                {
+                    if (data[3].Contains('/'))
+                    {
+                        string[] dateDetails = data[3].Split('/');
+                        if (dateDetails[0].Length==2)
+                        {
+                            return DateTime.ParseExact(data[3], "dd/MM/yyyy", CultureInfo.InvariantCulture).ToString();
+                        }
+                        else
+                        {
+                            return data[3];
+                        }
+                    }
+                    else
+                    {
+                        return data[3];
+                    }
+                }
+            }
+
         }
 
         private static double OverlappingDays(DateTime firstStart, DateTime firstEnd, DateTime secondStart, DateTime secondEnd)

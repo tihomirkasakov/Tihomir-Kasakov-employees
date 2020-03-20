@@ -1,0 +1,41 @@
+﻿@model SirmaSolution.Web.Models.ViewModels.EmployeeInfoViewModel
+
+@{
+    ViewData["Title"] = "Result";
+}
+
+@using SirmaSolution.Web.Models.ViewModels
+
+<style>
+    #employeesResult {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+        #employeesResult td, #employeesResult th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+</style>
+
+<h4 id="gridLabel">
+    Result of uploaded file
+</h4>
+
+<table role="grid" id="employeesResult">
+    <tr>
+        <th>Employee ID #1</th>
+        <th>Employee ID #2</th>
+        <th>Project ID</th>
+        <th>Days worked</th>
+    </tr>
+    @foreach (EmployeeInfoDto employeeInfo in Model.EmployeesInfo)
+    {
+        <tr>
+            <td>@employeeInfo.FirstEmployeeId</td>
+            <td>@employeeInfo.SecondEmployeeId</td>
+            <td>@employeeInfo.ProjectId</td>
+            <td>@employeeInfo.DaysOnSameProject</td>
+        </tr>
+    }
+</table>
