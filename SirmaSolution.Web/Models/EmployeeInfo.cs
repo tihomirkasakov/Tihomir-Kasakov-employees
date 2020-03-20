@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace SirmaSolution.Web.Models
+﻿namespace SirmaSolution.Web.Models
 {
+    using System;
+
     public class EmployeeInfo
     {
         public int EmployeeId { get; set; }

@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace SirmaSolution.Web.Models.ViewModels
+﻿namespace SirmaSolution.Web.Models.ViewModels
 {
+    using System.Collections.Generic;
+
     public class EmployeeInfoViewModel
     {
         public EmployeeInfoViewModel()

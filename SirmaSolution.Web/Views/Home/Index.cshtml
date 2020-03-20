@@ -1,13 +1,10 @@
-﻿@*@model SirmaSolution.Web.Models.AppFileViewModel*@
-
-@{
+﻿@{
     ViewData["Title"] = "Home";
 }
 
 <h4>Upload your file</h4>
 
 <form enctype="multipart/form-data" method="post" asp-controller="Home" asp-action="UploadFile">
-
     <input type="file" name="file" />
     <input class="btn-outline-dark" type="submit" value="Upload" />
 </form>
