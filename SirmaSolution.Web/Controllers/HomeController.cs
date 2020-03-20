@@ -39,26 +39,37 @@ namespace SirmaSolution.Web.Controllers
                 {
                     row++;
                     string line = reader.ReadLine();
+                    string fromDateValue = string.Empty;
                     string toDateValue = string.Empty;
 
                     if (!line.ToLower().Contains("empid"))
                     {
                         string[] data = line.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToArray();
 
+                        if (data.Length < 4)
+                        {
+                            continue;
+                        }
+                        else if (data.Length > 4)
+                        {
+                            data[3] = string.Join(", ", data.Skip(3));
+                        }
+
                         int employeeId = 0;
                         int.TryParse(data[0], out employeeId);
                         int projectId = 0;
                         int.TryParse(data[1], out projectId);
 
-                        toDateValue = ValidateToDate(data);
-
-                        if (employeeId == 0 || projectId == 0 ||  string.IsNullOrWhiteSpace(toDateValue))
+                        if (employeeId == 0 || projectId == 0)
                         {
                             continue;
                         }
 
+                        fromDateValue = ValidateToDate(data[2]);
+                        toDateValue = ValidateToDate(data[3]);
+
                         DateTime fromDate;
-                        DateTime.TryParse(data[2], CultureInfo.InvariantCulture, DateTimeStyles.None, out fromDate);
+                        DateTime.TryParse(fromDateValue, CultureInfo.InvariantCulture, DateTimeStyles.None, out fromDate);
                         DateTime toDate;
                         DateTime.TryParse(toDateValue, CultureInfo.InvariantCulture, DateTimeStyles.None, out toDate);
 
@@ -129,43 +140,34 @@ namespace SirmaSolution.Web.Controllers
                 model.EmployeesInfo.Add(dto);
             }
 
+            model.EmployeesInfo = model.EmployeesInfo.OrderBy(x => x.ProjectId).ToList();
+
             return View("Result", model);
         }
 
-        private static string ValidateToDate(string[] data)
+        private static string ValidateToDate(string date)
         {
-            if (data.Length < 4)
+            if (date.ToLower() == "null")
             {
-                return "";
-            }
-            else if (data.Length > 4)
-            {
-                return string.Join(", ", data.Skip(3));
+                return DateTime.Today.ToString();
             }
             else
             {
-                if (data[3].ToLower() == "null")
+                if (date.Contains('/'))
                 {
-                    return DateTime.Today.ToString();
-                }
-                else
-                {
-                    if (data[3].Contains('/'))
+                    string[] dateDetails = date.Split('/');
+                    if (dateDetails[0].Length == 2)
                     {
-                        string[] dateDetails = data[3].Split('/');
-                        if (dateDetails[0].Length==2)
-                        {
-                            return DateTime.ParseExact(data[3], "dd/MM/yyyy", CultureInfo.InvariantCulture).ToString();
-                        }
-                        else
-                        {
-                            return data[3];
-                        }
+                        return DateTime.ParseExact(date, "dd/MM/yyyy", CultureInfo.InvariantCulture).ToString();
                     }
                     else
                     {
-                        return data[3];
+                        return date;
                     }
+                }
+                else
+                {
+                    return date;
                 }
             }
 
